@@ -9,5 +9,5 @@ distributor_url  = https://github.com/Danborad/Fndesk-lite
 desktop_uidir    = ui
 platform         = all
 desktop_applaunchname = fndesk.Application
-version          = 2.5.0
-changelog        = `• 精简为纯图标工坊：移除桌面卡片(WeTab 小组件)功能，专注应用图标与快捷方式<br>• 更换全新 Fndesk 品牌图标，圆角裁切并覆盖套件/桌面/原生应用全部尺寸<br>• 图标工坊原图持久化：二次编辑无损缩放与像素级精准回显<br>• 生成飞牛原生应用与快捷方式即时同步，移除多余刷新提示`
+version          = 2.5.1
+changelog        = `• 修复桌面图标仍显示旧 Logo：采用版本化图标目录 images/v250，强制客户端重新拉取<br>• 精简为纯图标工坊：移除桌面卡片(WeTab 小组件)功能，专注应用图标与快捷方式<br>• 更换全新 Fndesk 品牌图标，圆角裁切并覆盖套件/桌面/原生应用全部尺寸<br>• 图标工坊原图持久化：二次编辑无损缩放与像素级精准回显`

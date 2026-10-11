@@ -8,7 +8,7 @@
 
 > **v2.5 起：已彻底移除「桌面卡片 / WeTab 小组件」模块，纯图标工坊，更轻更专注。**
 
-![version](https://img.shields.io/badge/version-2.5.0-3b82f6?style=flat-square)
+![version](https://img.shields.io/badge/version-2.5.1-3b82f6?style=flat-square)
 ![platform](https://img.shields.io/badge/platform-fnOS-10b981?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![runtime](https://img.shields.io/badge/runtime-Node.js-339933?style=flat-square)

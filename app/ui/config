@@ -2,13 +2,15 @@
     ".url": {
         "fndesk.Application": {
             "title": "Fndesk Lite",
-            "icon": "images/icon_{0}.png",
+            "icon": "images/v250/icon_{0}.png",
             "type": "iframe",
             "url": "/cgi/ThirdParty/fndesk/index.cgi/",
             "gatewaySocket": "fndesk.sock",
             "gatewayPrefix": "/app/fndesk",
             "allUsers": false,
-            "control": {"accessPerm": "editable"}
+            "control": {
+                "accessPerm": "editable"
+            }
         }
     }
 }

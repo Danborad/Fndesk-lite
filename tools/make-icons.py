@@ -56,6 +56,11 @@ def main():
     save(master, "app/server/static/icon.png", 256)
     save(master, "app/ui/images/icon_256.png", 256)
     save(master, "app/ui/images/icon_64.png", 64)
+    # 版本化图标目录：桌面端会长期缓存 icon_{0}.png 这个 URL，
+    # 换图标时递增此目录即可强制客户端重新拉取。
+    save(master, "app/ui/images/v250/icon_256.png", 256)
+    save(master, "app/ui/images/v250/icon_128.png", 128)
+    save(master, "app/ui/images/v250/icon_64.png", 64)
     save(master, "app/server/fndesk_app/ICON.PNG", 256)
     save(master, "app/server/fndesk_app/ICON_256.PNG", 256)
     save(master, "docs/icon.png", 512)

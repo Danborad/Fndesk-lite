@@ -1431,7 +1431,7 @@ async function handleRequest(req, res) {
     return sendJson(res, 200, {
       success: true,
       ready: true,
-      version: "2.5.0",
+      version: "2.5.1",
       hasPassword: hasPw,
       appName: "fndesk",
       nodeVersion: process.version,
