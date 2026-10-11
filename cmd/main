@@ -1,0 +1,191 @@
+#!/bin/bash
+
+# ========== Fndesk Lite 进程守护与生命周期管理 ==========
+TRIM_APPNAME="${TRIM_APPNAME:-fndesk}"
+TRIM_APPDEST_VOL="${TRIM_APPDEST_VOL:-/vol1}"
+TRIM_APPDEST="${TRIM_APPDEST:-/var/apps/fndesk/target}"
+TRIM_PKGVAR="${TRIM_PKGVAR:-/var/apps/fndesk/var}"
+
+LOG_FILE="${TRIM_APPDEST_VOL}/@appshare/${TRIM_APPNAME}/fndesk日志.log"
+PID_FILE="${TRIM_PKGVAR}/app.pid"
+FALLBACK_PID_FILE="/var/apps/fndesk/var/app.pid"
+SERVER_JS="${TRIM_APPDEST}/server/server.js"
+
+mkdir -p "$(dirname "${LOG_FILE}")" 2>/dev/null || true
+touch "${LOG_FILE}" 2>/dev/null || true
+
+trim_log() {
+    if [ -f "${LOG_FILE}" ]; then
+        local line_count=$(wc -l < "${LOG_FILE}" 2>/dev/null || echo 0)
+        if [ "${line_count}" -gt 200 ]; then
+            sed -i -e :a -e '$q;N;101,$D;ba' "${LOG_FILE}" 2>/dev/null || true
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - [Fndesk Lite] 日志已裁剪，保留最后100行" >> "${LOG_FILE}" 2>&1
+        fi
+    fi
+}
+
+find_node() {
+    for p in "/usr/bin/node" "/usr/local/bin/node" "/var/apps/nodejs_v22/target/bin/node" "/var/apps/nodejs_v24/target/bin/node"; do
+        if [ -x "$p" ]; then
+            echo "$p"
+            return 0
+        fi
+    done
+    if command -v node >/dev/null 2>&1; then
+        command -v node
+        return 0
+    fi
+    return 1
+}
+
+check_process() {
+    local pid=$1
+    [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null && return 0 || return 1
+}
+
+verify_process() {
+    local pid=$1
+    [ -z "${pid}" ] && return 1
+    if ps -p "${pid}" -o cmd= 2>/dev/null | grep -q "server/server\.js"; then
+        return 0
+    fi
+    return 1
+}
+
+status() {
+    # 1. 优先校验 PID 文件
+    for pf in "${PID_FILE}" "${FALLBACK_PID_FILE}"; do
+        if [ -f "${pf}" ]; then
+            local pid=$(head -n 1 "${pf}" 2>/dev/null | tr -d '[:space:]')
+            if check_process "${pid}" && verify_process "${pid}"; then
+                return 0
+            else
+                rm -f "${pf}" 2>/dev/null || true
+            fi
+        fi
+    done
+
+    # 2. 兜底检索进程树
+    local pid=$(pgrep -f "server/server\.js" | head -n 1)
+    if [ -n "${pid}" ] && verify_process "${pid}"; then
+        mkdir -p "$(dirname "${PID_FILE}")" 2>/dev/null || true
+        printf "%s" "${pid}" > "${PID_FILE}" 2>/dev/null || true
+        return 0
+    fi
+
+    # 3. 端口占位检索兜底 (9990)
+    local port_pid=$(lsof -ti :9990 -sTCP:LISTEN 2>/dev/null | head -n 1)
+    if [ -n "${port_pid}" ] && verify_process "${port_pid}"; then
+        mkdir -p "$(dirname "${PID_FILE}")" 2>/dev/null || true
+        printf "%s" "${port_pid}" > "${PID_FILE}" 2>/dev/null || true
+        return 0
+    fi
+
+    return 1
+}
+
+stop_process() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - [Fndesk Lite] 正在停止服务..." >> "${LOG_FILE}" 2>&1
+    for pf in "${PID_FILE}" "${FALLBACK_PID_FILE}"; do
+        if [ -r "${pf}" ]; then
+            local pid=$(head -n 1 "${pf}" 2>/dev/null | tr -d '[:space:]')
+            if check_process "${pid}"; then
+                kill -TERM "${pid}" 2>/dev/null || true
+                local count=0
+                while check_process "${pid}" && [ $count -lt 6 ]; do
+                    sleep 0.5
+                    count=$((count + 1))
+                done
+                if check_process "${pid}"; then
+                    kill -KILL "${pid}" 2>/dev/null || true
+                fi
+            fi
+            rm -f "${pf}" 2>/dev/null || true
+        fi
+    done
+    pkill -f "server/server\.js" 2>/dev/null || true
+    fuser -k 9990/tcp 2>/dev/null || true
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - [Fndesk Lite] 服务已停止" >> "${LOG_FILE}" 2>&1
+    return 0
+}
+
+start_process() {
+    echo "-------------- [$(date '+%Y-%m-%d %H:%M:%S')] --------------" >> "${LOG_FILE}" 2>&1
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - [Fndesk Lite] 启动中..." >> "${LOG_FILE}" 2>&1
+    
+    if status; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - [Fndesk Lite] 进程已在运行" >> "${LOG_FILE}" 2>&1
+        psql -U postgres -d appcenter -c "UPDATE app SET status = 'running', is_non_manual_stop = false WHERE app_name = 'fndesk';" 2>/dev/null || true
+        psql -U postgres -d trim_sac -c "UPDATE entry SET state = 'running', is_display = true WHERE app_name = 'fndesk';" 2>/dev/null || true
+        return 0
+    fi
+
+    # 清理残留占用端口的异常孤儿进程
+    fuser -k 9990/tcp 2>/dev/null || true
+    pkill -f "server/server\.js" 2>/dev/null || true
+    sleep 0.5
+
+    NODE_BIN=$(find_node)
+    if [ -z "${NODE_BIN}" ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - 错误：系统中未找到 Node.js 运行时！" >> "${LOG_FILE}" 2>&1
+        return 1
+    fi
+
+    # 规范化 SERVER_JS
+    if [ ! -f "${SERVER_JS}" ]; then
+        if [ -f "/var/apps/fndesk/target/server/server.js" ]; then
+            SERVER_JS="/var/apps/fndesk/target/server/server.js"
+        elif [ -f "/vol1/@appcenter/fndesk/server/server.js" ]; then
+            SERVER_JS="/vol1/@appcenter/fndesk/server/server.js"
+        fi
+    fi
+
+    mkdir -p "$(dirname "${PID_FILE}")" 2>/dev/null || true
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - 使用 Node: ${NODE_BIN}，执行脚本: ${SERVER_JS}" >> "${LOG_FILE}" 2>&1
+    nohup setsid "${NODE_BIN}" "${SERVER_JS}" </dev/null >> "${LOG_FILE}" 2>&1 &
+    local app_pid=$!
+    disown "${app_pid}" 2>/dev/null || true
+    printf "%s" "${app_pid}" > "${PID_FILE}" 2>/dev/null || true
+    mkdir -p "$(dirname "${FALLBACK_PID_FILE}")" 2>/dev/null || true
+    printf "%s" "${app_pid}" > "${FALLBACK_PID_FILE}" 2>/dev/null || true
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - [Fndesk Lite] 服务启动成功，PID: ${app_pid}" >> "${LOG_FILE}" 2>&1
+
+    sleep 1
+    if check_process "${app_pid}"; then
+        psql -U postgres -d appcenter -c "UPDATE app SET status = 'running', is_non_manual_stop = false WHERE app_name = 'fndesk';" 2>/dev/null || true
+        psql -U postgres -d trim_sac -c "UPDATE entry SET state = 'running', is_display = true WHERE app_name = 'fndesk';" 2>/dev/null || true
+        return 0
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - [Fndesk Lite] 错误：服务未能成功保持运行！" >> "${LOG_FILE}" 2>&1
+        rm -f "${PID_FILE}" "${FALLBACK_PID_FILE}" 2>/dev/null || true
+        return 1
+    fi
+}
+
+case $1 in
+start)
+    start_process
+    exit $?
+    ;;
+stop)
+    stop_process
+    trim_log
+    exit $?
+    ;;
+status)
+    if status; then
+        exit 0
+    else
+        exit 3
+    fi
+    ;;
+restart)
+    stop_process
+    sleep 1
+    start_process
+    exit $?
+    ;;
+*)
+    exit 1
+    ;;
+esac

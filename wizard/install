@@ -1,0 +1,27 @@
+[
+    {
+        "stepTitle": "Fndesk Lite 安装向导",
+        "items": [
+            {
+                "type": "tips",
+                "helpText": "Fndesk Lite 是专注于飞牛桌面图标管理与应用快捷方式的纯净开源工具。"
+            },
+            {
+                "type": "text",
+                "field": "wizard_app_port",
+                "label": "访问端口",
+                "initValue": "9990",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入端口号"
+                    },
+                    {
+                        "pattern": "^([1-9]\\d{3}|[1-5]\\d{4}|6[0-4]\\d{3}|65000)$",
+                        "message": "请选择1000-65000之间的数字"
+                    }
+                ]
+            }
+        ]
+    }
+]

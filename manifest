@@ -1,0 +1,13 @@
+appname          = fndesk
+display_name     = `Fndesk Lite - 飞牛桌面图标工坊`
+desc             = `精简纯净的飞牛桌面图标与应用快捷方式管理套件。支持原生应用生成、Docker容器一键导入、网页快捷方式与专业图标工坊（苹果Squircle平滑圆角/内边距留白/品牌纯色与渐变底色/Favicon自动嗅探）。彻底移除闭源二进制与多余臃肿功能，基于飞牛原生 Node.js 开源服务构建。<br>• 开源主页：<a target='_blank' href='https://github.com/Danborad/Fndesk-lite' style='color: #60a5fa; font-weight: bold;'>Danborad/Fndesk-lite</a>`
+source           = thirdparty
+maintainer       = Danborad
+maintainer_url   = https://github.com/Danborad/Fndesk-lite
+distributor      = Danborad
+distributor_url  = https://github.com/Danborad/Fndesk-lite
+desktop_uidir    = ui
+platform         = all
+desktop_applaunchname = fndesk.Application
+version          = 2.4.0
+changelog        = `• 全新独立开源仓库 Fndesk Lite，致敬并重构自 IMGZCQ/Fndesk 原项目<br>• 图标工坊原图持久化：二次编辑无损缩放与像素级精准回显<br>• 生成飞牛原生应用与快捷方式即时同步，移除多余刷新提示<br>• 图标工坊操作区自适应排版，根治文字折行`

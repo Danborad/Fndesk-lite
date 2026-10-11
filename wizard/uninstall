@@ -1,0 +1,29 @@
+[
+    {
+        "stepTitle": "确认卸载 Fndesk Lite",
+        "items": [
+            {
+                "type": "radio",
+                "field": "wizard_data_action",
+                "label": "是否保留配置数据（包括已保存的图标配置）",
+                "initValue": "keep",
+                "options": [
+                    {
+                        "label": "保留配置数据（推荐）",
+                        "value": "keep"
+                    },
+                    {
+                        "label": "删除所有数据",
+                        "value": "delete"
+                    }
+                ],
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请选择数据保留选项"
+                    }
+                ]
+            }
+        ]
+    }
+]

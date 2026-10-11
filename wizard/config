@@ -1,0 +1,23 @@
+[
+    {
+        "stepTitle": "Fndesk Lite 设置",
+        "items": [
+            {
+                "type": "text",
+                "field": "wizard_app_port",
+                "label": "访问端口",
+                "initValue": "9990",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入端口号"
+                    },
+                    {
+                        "pattern": "^([1-9]\\d{3}|[1-5]\\d{4}|6[0-4]\\d{3}|65000)$",
+                        "message": "请选择1000-65000之间的数字"
+                    }
+                ]
+            }
+        ]
+    }
+]
