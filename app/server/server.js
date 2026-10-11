@@ -1,4 +1,4 @@
-// Fndesk Lite - 飞牛桌面图标工坊与 WeTab 小组件轻量后端
+// Fndesk Lite - 飞牛桌面图标工坊轻量后端
 // 纯净 Node.js 原生服务，无外部二进制依赖，常驻内存仅约 15MB
 
 const http = require("http");
@@ -16,7 +16,6 @@ const DOMAIN_SOCKET_PATH = "/var/apps/fndesk/target/fndesk.sock";
 // 数据存储路径：保留用户原有的 deskdata 目录
 const DATA_DIR = path.resolve("/vol1/@appshare/fndesk/deskdata");
 const CONFIG_FILE = path.join(DATA_DIR, "data.json");
-const WIDGETS_FILE = path.join(DATA_DIR, "widgets.json");
 const PW_FILE = path.join(DATA_DIR, "pw.json");
 const IMG_DIR = path.join(DATA_DIR, "img");
 const APPCENTER_CLI = "/usr/local/bin/appcenter-cli";
@@ -85,8 +84,7 @@ function getDesktopStatus() {
   }
 }
 
-// 立即生效（注入桌面）
-// 立即生效（注入桌面与 WeTab 小组件）
+// 立即生效（注入桌面快捷方式图标）
 function applyDesktop() {
   ensureOriginalBackup();
   if (!fs.existsSync(TARGET_INDEX)) {
@@ -395,137 +393,6 @@ function readIcons() {
 // 写入图标配置
 function writeIcons(icons) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(icons, null, 2), "utf8");
-}
-
-// 读取 WeTab 小组件配置
-function readWidgets() {
-  try {
-    if (!fs.existsSync(WIDGETS_FILE)) {
-      const initial = [
-        {
-          id: 1,
-          type: "weather",
-          size: "medium",
-          city: "北京",
-          theme: "glass",
-          sort: 10
-        },
-        {
-          id: 2,
-          type: "countdown",
-          size: "small",
-          title: "国庆节",
-          targetDate: "2026-10-01T00:00",
-          theme: "forest",
-          sort: 20
-        },
-        {
-          id: 3,
-          type: "clock",
-          size: "small",
-          style: "digital",
-          theme: "dark",
-          sort: 30
-        }
-      ];
-      fs.writeFileSync(WIDGETS_FILE, JSON.stringify(initial, null, 2), "utf8");
-      return initial;
-    }
-    const raw = fs.readFileSync(WIDGETS_FILE, "utf8").trim();
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error("[Fndesk Lite] 读取 widgets.json 失败:", e.message);
-    return [];
-  }
-}
-
-// 写入 WeTab 小组件配置
-function writeWidgets(widgets) {
-  fs.writeFileSync(WIDGETS_FILE, JSON.stringify(widgets, null, 2), "utf8");
-}
-
-// 天气缓存与翻译
-const weatherCache = {};
-const WEATHER_TRANSLATIONS = {
-  "sunny": "晴",
-  "clear": "晴",
-  "partly cloudy": "多云",
-  "cloudy": "阴",
-  "overcast": "阴天",
-  "mist": "薄雾",
-  "fog": "大雾",
-  "haze": "霾",
-  "smoky haze": "轻度霾",
-  "light rain": "小雨",
-  "patchy rain nearby": "局部有雨",
-  "moderate rain": "中雨",
-  "heavy rain": "大雨",
-  "torrential rain shower": "暴雨",
-  "thunderstorm": "雷阵雨",
-  "light snow": "小雪",
-  "moderate snow": "中雪",
-  "heavy snow": "大雪",
-  "sleet": "雨夹雪",
-  "windy": "大风"
-};
-
-function translateWeather(desc = "") {
-  const lower = desc.trim().toLowerCase();
-  for (const [k, v] of Object.entries(WEATHER_TRANSLATIONS)) {
-    if (lower.includes(k)) return v;
-  }
-  return desc || "晴";
-}
-
-async function getWeather(city = "北京") {
-  const key = (city || "北京").trim();
-  if (weatherCache[key] && Date.now() - weatherCache[key].timestamp < 20 * 60 * 1000) {
-    return weatherCache[key].data;
-  }
-
-  try {
-    const url = `https://wttr.in/${encodeURIComponent(key)}?format=j1`;
-    const res = await httpGet(url, false);
-    const json = JSON.parse(res.buffer.toString("utf8"));
-    const curr = json.current_condition[0];
-    const weather = json.weather || [];
-    const today = weather[0] || {};
-    const rawDesc = curr.weatherDesc && curr.weatherDesc[0] ? curr.weatherDesc[0].value : "";
-    const result = {
-      city: key,
-      temp: curr.temp_C,
-      feelsLike: curr.FeelsLikeC,
-      desc: translateWeather(rawDesc),
-      humidity: curr.humidity + "%",
-      wind: (curr.winddir16Point || "") + " " + (curr.windspeedKmph ? curr.windspeedKmph + "km/h" : "微风"),
-      tempMin: today.mintempC || curr.temp_C,
-      tempMax: today.maxtempC || curr.temp_C,
-      forecast: weather.slice(0, 5).map(w => ({
-        date: w.date,
-        tempMin: w.mintempC,
-        tempMax: w.maxtempC,
-        desc: translateWeather(w.hourly && w.hourly[4] && w.hourly[4].weatherDesc ? w.hourly[4].weatherDesc[0].value : "晴")
-      }))
-    };
-    weatherCache[key] = { timestamp: Date.now(), data: result };
-    return result;
-  } catch (e) {
-    console.warn("[Fndesk Lite] 获取天气失败，返回离线兜底:", e.message);
-    return {
-      city: key,
-      temp: "22",
-      feelsLike: "20",
-      desc: "晴",
-      humidity: "45%",
-      wind: "微风 2级",
-      tempMin: "18",
-      tempMax: "26",
-      forecast: [
-        { date: "明天", tempMin: "17", tempMax: "26", desc: "晴" },
-        { date: "后天", tempMin: "18", tempMax: "27", desc: "多云" }
-      ]
-    };
-  }
 }
 
 // 查询已安装的飞牛原生应用列表
@@ -1564,7 +1431,7 @@ async function handleRequest(req, res) {
     return sendJson(res, 200, {
       success: true,
       ready: true,
-      version: "2.4.0",
+      version: "2.5.0",
       hasPassword: hasPw,
       appName: "fndesk",
       nodeVersion: process.version,
@@ -1587,7 +1454,7 @@ async function handleRequest(req, res) {
       await refreshNativeDesktopApps();
       return sendJson(res, 200, {
         success: true,
-        message: "飞牛桌面小组件、快捷方式与原生应用地址已立即生效！请刷新飞牛桌面查看效果。"
+        message: "飞牛桌面快捷方式与原生应用地址已立即生效！请刷新飞牛桌面查看效果。"
       });
     } catch (e) {
       return sendJson(res, 500, { success: false, message: "立即生效失败: " + e.message });
@@ -1604,65 +1471,6 @@ async function handleRequest(req, res) {
     } catch (e) {
       return sendJson(res, 500, { success: false, message: "还原桌面失败: " + e.message });
     }
-  }
-
-  // 3. WeTab 卡片小组件 CRUD
-  if (pathname === "/api/widgets" && req.method === "GET") {
-    const widgets = readWidgets();
-    return sendJson(res, 200, { success: true, widgets });
-  }
-
-  if (pathname === "/api/widgets" && req.method === "POST") {
-    const body = await parseJsonBody(req);
-    const widgets = readWidgets();
-    let targetId = body.id ? parseInt(body.id, 10) : null;
-    if (!targetId) {
-      targetId = widgets.length > 0 ? Math.max(...widgets.map(w => parseInt(w.id || 0, 10))) + 1 : 1;
-    }
-
-    const itemData = {
-      id: targetId,
-      type: body.type || "weather",
-      size: body.size || "medium",
-      title: (body.title || "").trim(),
-      targetDate: body.targetDate || "",
-      city: (body.city || "").trim(),
-      theme: body.theme || "glass",
-      style: body.style || "digital",
-      content: body.content || "",
-      sort: parseInt(body.sort || targetId * 10, 10)
-    };
-
-    const existingIdx = widgets.findIndex(w => parseInt(w.id, 10) === targetId);
-    if (existingIdx !== -1) {
-      widgets[existingIdx] = { ...widgets[existingIdx], ...itemData };
-    } else {
-      widgets.push(itemData);
-    }
-    writeWidgets(widgets);
-    try {
-      if (getDesktopStatus().injected) applyDesktop();
-    } catch (_) {}
-
-    return sendJson(res, 200, { success: true, message: "卡片小组件已保存", widget: itemData });
-  }
-
-  if (pathname.startsWith("/api/widgets/") && req.method === "DELETE") {
-    const id = parseInt(pathname.replace("/api/widgets/", ""), 10);
-    const widgets = readWidgets();
-    const filtered = widgets.filter(w => parseInt(w.id, 10) !== id);
-    writeWidgets(filtered);
-    try {
-      if (getDesktopStatus().injected) applyDesktop();
-    } catch (_) {}
-    return sendJson(res, 200, { success: true, message: "小组件已删除" });
-  }
-
-  // 4. 实时天气接口
-  if (pathname === "/api/weather" && req.method === "GET") {
-    const city = parsedUrl.searchParams.get("city") || "北京";
-    const data = await getWeather(city);
-    return sendJson(res, 200, { success: true, weather: data });
   }
 
   // 5. 登录认证

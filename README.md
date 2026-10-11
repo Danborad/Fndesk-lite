@@ -4,9 +4,11 @@
 
 **极简 · 纯净 · 完全开源 —— 专注飞牛桌面图标与应用快捷方式管理**
 
-为 [飞牛 fnOS](https://www.fnnas.com/) 打造的轻量级套件：告别闭源臃肿与无关杂项，只做一件事 —— 把桌面入口与图标做到最好用。
+为 [飞牛 fnOS](https://www.fnnas.com/) 打造的轻量级套件：告别闭源臃肿与无关杂项，只做一件事 —— 把桌面图标与应用快捷方式做到最好用。
 
-![version](https://img.shields.io/badge/version-2.4.0-3b82f6?style=flat-square)
+> **v2.5 起：已彻底移除「桌面卡片 / WeTab 小组件」模块，纯图标工坊，更轻更专注。**
+
+![version](https://img.shields.io/badge/version-2.5.0-3b82f6?style=flat-square)
 ![platform](https://img.shields.io/badge/platform-fnOS-10b981?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![runtime](https://img.shields.io/badge/runtime-Node.js-339933?style=flat-square)
@@ -17,39 +19,17 @@
 
 ## 📸 界面预览
 
-### 管理面板（深色 / 浅色主题）
+### 管理面板
 
-![管理面板 · 深色主题](docs/screenshots/dashboard-dark.png)
+浅色主题下的一页式管理面板：图标总览、原生应用、快捷方式与 Docker 容器状态一眼可见。
 
-![管理面板 · 浅色主题](docs/screenshots/dashboard-light.png)
+![管理面板 · 浅色主题](docs/screenshots/home-light.png)
 
-### 图标工坊 · 图片模式
+### 添加 / 编辑图标
 
-拖拽 / 滚轮缩放、飞牛 Squircle 平滑圆角、内边距留白、底色与投影随心调节，所见即所得。
+左侧填写应用信息（支持 Docker 一键导入），右侧为所见即所得的图标裁剪工坊。
 
-![图标工坊 · 图片模式](docs/screenshots/studio-image.png)
-
-### 图标工坊 · 文字图标模式
-
-直接输入文字即可生成图标，支持回车换行、18~140px 字号平滑微调与字色自定义。
-
-![图标工坊 · 文字图标模式](docs/screenshots/studio-text.png)
-
-### Docker 一键导入
-
-自动嗅探本机运行中的容器，一键带入名称、镜像与映射端口。
-
-![Docker 一键导入](docs/screenshots/docker-import.png)
-
-### WeTab 桌面卡片小组件
-
-实时天气、倒计时纪念日、数字时钟、便签备忘，支持大 / 中 / 小三种尺寸形态。
-
-![WeTab 桌面卡片小组件](docs/screenshots/widgets.png)
-
-### 套件设置
-
-![套件设置](docs/screenshots/settings.png)
+![添加图标 · 图标工坊](docs/screenshots/add-icon-light.png)
 
 > 以上截图均为演示数据，与任何真实环境无关。
 
@@ -76,8 +56,7 @@
 - **🌐 高清 Favicon 自动嗅探**
   - 输入网址或端口，后端自动抓取目标站点的 Favicon / Apple Touch Icon，无需到处找图。
 
-- **🖥️ 桌面小组件与智能路由**
-  - WeTab 风格桌面卡片：天气、倒计时、时钟、便签，尺寸自由。
+- **🖥️ 智能路由与直达打开**
   - 自动识别访问方式（内网 IP / 公网域名 / 飞牛 ID 二级路径），图标点击直达应用，不再跳回登录页。
 
 - **🚀 极简纯净的开源架构**
@@ -103,7 +82,7 @@ Fndesk Lite 与原项目的关系，是一次**聚焦式的重构**，而非替�
 | --- | --- | --- |
 | 定位 | 飞牛桌面**百宝箱**（全能） | 飞牛桌面**图标工坊**（聚焦） |
 | 形态 | 含闭源 `fndesk-go` 二进制 | 纯开源 Node.js，零外部二进制 |
-| 覆盖 | 主题 / 壁纸 / 图标 / 组件 / 音乐 / 右键菜单… | 图标 · 快捷方式 · 原生应用 · 桌面组件 |
+| 覆盖 | 主题 / 壁纸 / 图标 / 组件 / 音乐 / 右键菜单… | 图标 · 快捷方式 · 飞牛原生应用 |
 | 资源占用 | 功能丰富，体积较大 | 十余兆内存，极简常驻 |
 
 如果你想体验完整的「飞牛百宝箱」，请直接前往原项目；如果你只想要**干净、轻量、可控**的
@@ -151,7 +130,12 @@ http://<你的飞牛 NAS 内网 IP>:9990/
 ├── config/
 │   ├── privilege            # 套件运行权限配置（root）
 │   └── resource             # 依赖资源描述
-├── docs/screenshots/        # README 展示截图
+├── docs/
+│   ├── screenshots/         # README 展示截图（浅色主题演示数据）
+│   ├── icon.png             # 品牌图标（512px 母版）
+│   └── icon-source.png      # 图标原始设计图
+├── tools/
+│   └── make-icons.py        # 从设计图一键生成全套图标（圆角裁切 + 多尺寸）
 ├── app/
 │   ├── server/
 │   │   ├── server.js        # 核心轻量 Node.js 后端服务（端口 9990）

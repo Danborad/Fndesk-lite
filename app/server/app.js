@@ -4,7 +4,7 @@ function escapeHtml(str) {
 }
 /**
  * Fndesk Lite - 前端核心业务控制器
- * 包含：WeTab 极简图标裁剪工坊、WeTab 桌面卡片组件管理、立即生效与还原桌面防搞坏机制
+ * 包含：极简图标裁剪工坊、飞牛原生应用/快捷方式管理、立即生效与还原桌面防搞坏机制
  */
 
 // API 根路径动态适配
@@ -196,7 +196,6 @@ function resolveDesktopUrl(item) {
 // ==================== 全局状态 ====================
 const state = {
   icons: [],
-  widgets: [],
   dockerContainers: [],
   activeFilter: "all",
   searchKeyword: "",
@@ -204,7 +203,7 @@ const state = {
   editingNative: false,
   desktopDirty: false,
 
-  // 图标工坊状态 (WeTab 裁剪风格与文字图标)
+  // 图标工坊状态 (裁剪风格与文字图标)
   cropper: {
     mode: "image", // "image" 或 "text"
     text: "",
@@ -225,19 +224,6 @@ const state = {
     startPanY: 0,
     isModified: false,
     isExistingIcon: false
-  },
-
-  // 小组件表单状态
-  widgetForm: {
-    id: null,
-    type: "weather",
-    size: "medium",
-    title: "",
-    targetDate: "",
-    city: "北京",
-    theme: "glass",
-    style: "digital",
-    content: ""
   }
 };
 
@@ -318,7 +304,7 @@ async function restoreDesktop() {
   }
 }
 
-// ==================== WeTab 极简图标裁剪工坊 (图 3 同款) ====================
+// ==================== 极简图标裁剪工坊 (苹果 Squircle 同款) ====================
 const WETAB_PALETTE = [
   // 第一排
   { color: "transparent", title: "透明" },
@@ -1165,339 +1151,6 @@ async function saveIcon() {
   }
 }
 
-// ==================== WeTab 桌面卡片组件管理 ====================
-async function loadWidgets() {
-  try {
-    const data = await fetchApi("/widgets");
-    state.widgets = data.widgets || [];
-    renderWidgets();
-    updateStats();
-  } catch (err) {
-    console.warn("获取卡片小组件失败:", err.message);
-  }
-}
-
-function renderWidgets() {
-  const grid = document.getElementById("widgetAdminGrid");
-  if (!grid) return;
-  if (state.widgets.length === 0) {
-    grid.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-dim);">
-        <i class="fa fa-cubes" style="font-size: 2.5rem; margin-bottom: 0.8rem; opacity: 0.4;"></i>
-        <div>暂未添加桌面卡片，点击上方「添加小组件卡片」丰富你的飞牛桌面</div>
-      </div>
-    `;
-    return;
-  }
-
-  const typeLabels = {
-    weather: "⛅ 实时天气",
-    countdown: "⏳ 倒计时/纪念日",
-    clock: "🕒 数字时钟",
-    notes: "📝 便签备忘"
-  };
-  const sizeLabels = {
-    small: "小 (1x1)",
-    medium: "中 (2x1)",
-    large: "大 (2x2)"
-  };
-
-  grid.innerHTML = state.widgets.map(w => {
-    return `
-      <div class="widget-admin-card">
-        <div class="widget-admin-top">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="widget-type-badge">${typeLabels[w.type] || w.type}</span>
-            <span class="widget-size-tag">${sizeLabels[w.size] || w.size}</span>
-          </div>
-          <div style="display: flex; gap: 4px;">
-            <button class="btn btn-secondary btn-icon btn-xs" onclick="editWidget(${w.id})" title="编辑">
-              <i class="fa fa-pencil"></i>
-            </button>
-            <button class="btn btn-secondary btn-icon btn-xs" style="color: var(--danger);" onclick="deleteWidget(${w.id})" title="删除">
-              <i class="fa fa-trash"></i>
-            </button>
-          </div>
-        </div>
-        <div class="widget-preview-wrapper">
-          ${renderStaticWidgetHtml(w)}
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
-function calcCountdown(targetDateStr) {
-  const target = new Date(targetDateStr).getTime();
-  const now = Date.now();
-  const diff = target - now;
-  if (isNaN(diff)) return { days: 0, hours: 0, mins: 0, secs: 0, isPast: false };
-  if (diff <= 0) {
-    const pastDays = Math.floor(Math.abs(diff) / (1000 * 60 * 60 * 24));
-    return { days: pastDays, hours: 0, mins: 0, secs: 0, isPast: true };
-  }
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-  const mins = Math.floor((diff / (1000 * 60)) % 60);
-  const secs = Math.floor((diff / 1000) % 60);
-  return { days, hours, mins, secs, isPast: false };
-}
-
-const pad = n => String(n).padStart(2, "0");
-
-function renderStaticWidgetHtml(w) {
-  const size = w.size || "medium";
-  const theme = w.theme || "glass";
-
-  if (w.type === "weather") {
-    const city = w.city || "北京";
-    if (size === "small") {
-      return `
-        <div class="wetab-card wetab-card-small theme-${theme}">
-          <div class="weather-inner">
-            <div class="weather-header"><span>${city}</span><span>⛅</span></div>
-            <div class="weather-main"><span class="weather-temp">22°</span><span class="weather-desc">晴间多云</span></div>
-            <div class="weather-footer"><span>18°~27°</span><span>湿度 45%</span></div>
-          </div>
-        </div>
-      `;
-    } else if (size === "large") {
-      return `
-        <div class="wetab-card wetab-card-large theme-${theme}">
-          <div class="weather-inner" style="gap: 12px;">
-            <div class="weather-header" style="font-size: 15px;"><span>${city} 天气概况</span><span style="font-size: 22px;">⛅</span></div>
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div class="weather-temp" style="font-size: 48px;">22°</div>
-              <div style="text-align: right;">
-                <div style="font-size: 15px; font-weight: 600;">晴间多云</div>
-                <div style="font-size: 12px; opacity: 0.75; margin-top: 4px;">今日 18° ~ 27°</div>
-              </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
-              <div class="weather-pill">💧 湿度: 45%</div>
-              <div class="weather-pill">💨 风况: 微风</div>
-              <div class="weather-pill">🌡️ 体感: 23°</div>
-              <div class="weather-pill">🍃 空气: 优良</div>
-            </div>
-          </div>
-        </div>
-      `;
-    } else {
-      return `
-        <div class="wetab-card wetab-card-medium theme-${theme}">
-          <div class="weather-inner" style="flex-direction: row; align-items: center; justify-content: space-between;">
-            <div>
-              <div class="weather-header" style="margin-bottom: 6px;"><span>${city}</span><span style="margin-left: 6px;">⛅</span></div>
-              <div class="weather-main"><span class="weather-temp">22°</span><span class="weather-desc">晴间多云</span></div>
-            </div>
-            <div class="weather-med-right">
-              <span class="weather-pill">🌡️ 18° ~ 27°</span>
-              <span class="weather-pill">💧 湿度 45%</span>
-              <span class="weather-pill">💨 微风</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  if (w.type === "countdown") {
-    const cd = calcCountdown(w.targetDate || "2026-10-01T00:00");
-    const targetStr = (w.targetDate || "2026-10-01").split("T")[0];
-    if (size === "small") {
-      return `
-        <div class="wetab-card wetab-card-small theme-${theme}">
-          <div class="cd-inner">
-            <div class="cd-title">${w.title || "目标倒计时"}</div>
-            <div class="cd-center"><span class="cd-days">${cd.days}</span><span class="cd-unit">天</span></div>
-            <div class="cd-footer">${cd.isPast ? "已过去" : "倒计时"}</div>
-          </div>
-        </div>
-      `;
-    } else if (size === "large") {
-      return `
-        <div class="wetab-card wetab-card-large theme-${theme}">
-          <div class="cd-inner" style="gap: 12px;">
-            <div class="weather-header" style="font-size: 15px;">
-              <span class="cd-title">${w.title || "目标倒计时"}</span>
-              <span style="font-size: 18px;">⏳</span>
-            </div>
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: auto 0;">
-              <div style="display: flex; align-items: baseline; gap: 6px;">
-                <span class="cd-days" style="font-size: 56px;">${cd.days}</span>
-                <span class="cd-unit" style="font-size: 18px;">天</span>
-              </div>
-              <div class="cd-time-bar" style="margin-top: 8px; font-size: 13px; padding: 4px 12px;">
-                ${pad(cd.hours)} 时 ${pad(cd.mins)} 分 ${pad(cd.secs)} 秒
-              </div>
-            </div>
-            <div class="cd-footer" style="text-align: center;">目标: ${targetStr}</div>
-          </div>
-        </div>
-      `;
-    } else {
-      return `
-        <div class="wetab-card wetab-card-medium theme-${theme}">
-          <div class="cd-inner">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div class="cd-title">${w.title || "目标倒计时"}</div>
-              <div style="font-size: 11px; opacity: 0.7;">${cd.isPast ? "已过" : "剩余"}</div>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin: auto 0;">
-              <div style="display: flex; align-items: baseline; gap: 4px;">
-                <span class="cd-days">${cd.days}</span>
-                <span class="cd-unit">天</span>
-              </div>
-              <div class="cd-time-bar">${pad(cd.hours)}:${pad(cd.mins)}:${pad(cd.secs)}</div>
-            </div>
-            <div class="cd-footer">${targetStr}</div>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  if (w.type === "clock") {
-    const now = new Date();
-    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    const secStr = pad(now.getSeconds());
-    const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 星期${["日","一","二","三","四","五","六"][now.getDay()]}`;
-
-    if (size === "small") {
-      return `
-        <div class="wetab-card wetab-card-small theme-${theme}">
-          <div class="clock-inner">
-            <div class="clock-time">${timeStr}<span class="clock-sec">${secStr}</span></div>
-            <div class="clock-date">${dateStr}</div>
-          </div>
-        </div>
-      `;
-    } else if (size === "large") {
-      return `
-        <div class="wetab-card wetab-card-large theme-${theme}">
-          <div class="clock-inner" style="justify-content: space-around;">
-            <div style="font-size: 14px; opacity: 0.85;">${now.getFullYear()} 年</div>
-            <div class="clock-time" style="font-size: 46px;">${timeStr}<span class="clock-sec" style="font-size: 20px;">${secStr}</span></div>
-            <div class="clock-date" style="font-size: 14px; font-weight: 600;">${dateStr}</div>
-          </div>
-        </div>
-      `;
-    } else {
-      return `
-        <div class="wetab-card wetab-card-medium theme-${theme}">
-          <div class="clock-inner">
-            <div class="clock-time" style="font-size: 38px;">${timeStr}<span class="clock-sec">${secStr}</span></div>
-            <div class="clock-date" style="font-size: 13px;">${dateStr}</div>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  // notes
-  return `
-    <div class="wetab-card wetab-card-${size} theme-${theme}">
-      <div class="notes-inner" style="padding: 10px;">
-        <div class="notes-title">📌 ${w.title || "便签备忘"}</div>
-        <div class="notes-content">${w.content || "写下待办事项或灵感备忘..."}</div>
-      </div>
-    </div>
-  `;
-}
-
-function openAddWidgetModal() {
-  state.widgetForm = {
-    id: null,
-    type: "weather",
-    size: "medium",
-    title: "",
-    targetDate: new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 16),
-    city: "北京",
-    theme: "glass",
-    style: "digital",
-    content: ""
-  };
-  updateWidgetFormInputs();
-  renderWidgetLivePreview();
-  openModal("widgetModal");
-}
-
-function editWidget(id) {
-  const w = state.widgets.find(item => item.id === id);
-  if (!w) return;
-  state.widgetForm = { ...w };
-  updateWidgetFormInputs();
-  renderWidgetLivePreview();
-  openModal("widgetModal");
-}
-
-function updateWidgetFormInputs() {
-  const f = state.widgetForm;
-  document.getElementById("widgetFieldId").value = f.id || "";
-  document.getElementById("fieldWeatherCity").value = f.city || "北京";
-  document.getElementById("fieldCdTitle").value = f.title || "";
-  document.getElementById("fieldCdDate").value = f.targetDate || "";
-  document.getElementById("fieldClockStyle").value = f.style || "digital";
-  document.getElementById("fieldNotesTitle").value = f.title || "";
-  document.getElementById("fieldNotesContent").value = f.content || "";
-  document.getElementById("fieldWidgetTheme").value = f.theme || "glass";
-
-  // 激活类型选择器
-  document.querySelectorAll("#widgetTypeSelector .segmented-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.type === f.type);
-  });
-  // 激活尺寸选择器
-  document.querySelectorAll("#widgetSizeSelector .segmented-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.size === f.size);
-  });
-
-  // 切换表单组显隐
-  document.getElementById("groupWeather").style.display = f.type === "weather" ? "block" : "none";
-  document.getElementById("groupCountdown").style.display = f.type === "countdown" ? "block" : "none";
-  document.getElementById("groupClock").style.display = f.type === "clock" ? "block" : "none";
-  document.getElementById("groupNotes").style.display = f.type === "notes" ? "block" : "none";
-}
-
-function renderWidgetLivePreview() {
-  const container = document.getElementById("widgetLivePreviewWrapper");
-  container.innerHTML = renderStaticWidgetHtml(state.widgetForm);
-}
-
-async function saveWidget() {
-  const f = state.widgetForm;
-  f.city = document.getElementById("fieldWeatherCity").value.trim();
-  f.title = f.type === "countdown" ? document.getElementById("fieldCdTitle").value.trim() : document.getElementById("fieldNotesTitle").value.trim();
-  f.targetDate = document.getElementById("fieldCdDate").value;
-  f.style = document.getElementById("fieldClockStyle").value;
-  f.content = document.getElementById("fieldNotesContent").value.trim();
-  f.theme = document.getElementById("fieldWidgetTheme").value;
-
-  try {
-    await fetchApi("/widgets", {
-      method: "POST",
-      body: JSON.stringify(f)
-    });
-    showToast("小组件卡片已保存，桌面已即时生效！", "success");
-    closeModal("widgetModal");
-    loadWidgets();
-    markDesktopDirty(false);
-  } catch (err) {
-    showToast("保存失败: " + err.message, "error");
-  }
-}
-
-async function deleteWidget(id) {
-  if (!confirm("确定要删除此桌面小组件卡片吗？")) return;
-  try {
-    await fetchApi(`/widgets/${id}`, { method: "DELETE" });
-    showToast("小组件已删除，桌面已同步！", "success");
-    loadWidgets();
-    markDesktopDirty(false);
-  } catch (err) {
-    showToast("删除失败: " + err.message, "error");
-  }
-}
-
 // ==================== Docker 容器嗅探 ====================
 async function loadDockerContainers() {
   try {
@@ -1538,7 +1191,8 @@ function handleDockerSelect(e) {
 function updateStats() {
   document.getElementById("statTotalIcons").textContent = state.icons.length;
   document.getElementById("statNativeApps").textContent = state.icons.filter(i => i.nativeInstalled).length;
-  document.getElementById("statTotalWidgets").textContent = state.widgets.length;
+  const shortcutsEl = document.getElementById("statShortcuts");
+  if (shortcutsEl) shortcutsEl.textContent = state.icons.filter(i => !i.nativeInstalled).length;
 }
 
 // ==================== 浅色 / 深色主题切换 ====================
@@ -1582,7 +1236,7 @@ function markDesktopDirty(dirty) {
   } else {
     btn.classList.remove("is-dirty");
     btn.innerHTML = `<i class="fa fa-bolt"></i> <span>立即生效</span>`;
-    btn.title = "将配置好的小组件和快捷图标立即挂载到飞牛桌面";
+    btn.title = "将配置好的快捷图标立即挂载到飞牛桌面";
   }
 }
 
@@ -1608,7 +1262,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // 基础数据加载
   ensureLanIp();
   loadIcons();
-  loadWidgets();
   loadDockerContainers();
   checkDesktopStatus();
 
@@ -1628,57 +1281,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btnCloseSettings").onclick = () => closeModal("settingsModal");
   document.getElementById("btnCancelSettings").onclick = () => closeModal("settingsModal");
 
-  // 主视图 Tab 切换
-  document.querySelectorAll("#mainTabs .segmented-btn").forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll("#mainTabs .segmented-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      const tab = btn.dataset.tab;
-      document.getElementById("tabViewIcons").style.display = tab === "icons" ? "block" : "none";
-      document.getElementById("tabViewWidgets").style.display = tab === "widgets" ? "block" : "none";
-    };
-  });
-
   // 添加图标
   document.getElementById("btnAddIcon").onclick = openAddIconModal;
   document.getElementById("btnCloseEditModal").onclick = () => closeModal("editModal");
   document.getElementById("btnCancelEdit").onclick = () => closeModal("editModal");
   document.getElementById("btnSaveIcon").onclick = saveIcon;
-
-  // 添加卡片小组件
-  document.getElementById("btnAddWidget").onclick = openAddWidgetModal;
-  document.getElementById("btnAddNewWidget").onclick = openAddWidgetModal;
-  document.getElementById("btnCloseWidgetModal").onclick = () => closeModal("widgetModal");
-  document.getElementById("btnCancelWidget").onclick = () => closeModal("widgetModal");
-  document.getElementById("btnSaveWidget").onclick = saveWidget;
-
-  // 小组件类型与尺寸切换
-  document.querySelectorAll("#widgetTypeSelector .segmented-btn").forEach(btn => {
-    btn.onclick = () => {
-      state.widgetForm.type = btn.dataset.type;
-      updateWidgetFormInputs();
-      renderWidgetLivePreview();
-    };
-  });
-  document.querySelectorAll("#widgetSizeSelector .segmented-btn").forEach(btn => {
-    btn.onclick = () => {
-      state.widgetForm.size = btn.dataset.size;
-      updateWidgetFormInputs();
-      renderWidgetLivePreview();
-    };
-  });
-  document.getElementById("fieldWidgetTheme").onchange = e => {
-    state.widgetForm.theme = e.target.value;
-    renderWidgetLivePreview();
-  };
-  document.getElementById("fieldWeatherCity").oninput = e => {
-    state.widgetForm.city = e.target.value;
-    renderWidgetLivePreview();
-  };
-  document.getElementById("fieldCdTitle").oninput = e => {
-    state.widgetForm.title = e.target.value;
-    renderWidgetLivePreview();
-  };
 
   // 图标工坊模式切换 (图片 / 文字)
   document.getElementById("tabModeImage").onclick = () => setCropperMode("image");
@@ -1855,24 +1462,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   });
 
-  // 小组件表单实时响应预览
-  document.getElementById("fieldCdDate").oninput = () => {
-    state.widgetForm.targetDate = document.getElementById("fieldCdDate").value;
-    renderWidgetLivePreview();
-  };
-  document.getElementById("fieldClockStyle").onchange = () => {
-    state.widgetForm.style = document.getElementById("fieldClockStyle").value;
-    renderWidgetLivePreview();
-  };
-  document.getElementById("fieldNotesTitle").oninput = () => {
-    state.widgetForm.title = document.getElementById("fieldNotesTitle").value;
-    renderWidgetLivePreview();
-  };
-  document.getElementById("fieldNotesContent").oninput = () => {
-    state.widgetForm.content = document.getElementById("fieldNotesContent").value;
-    renderWidgetLivePreview();
-  };
-
   // 局域网输入框失去焦点时智能自动探测 Favicon
   document.getElementById("fieldLan").addEventListener("blur", () => {
     const val = document.getElementById("fieldLan").value.trim();
@@ -1888,7 +1477,6 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       await Promise.all([
         loadIcons(),
-        loadWidgets(),
         loadDockerContainers(),
         checkDesktopStatus()
       ]);
@@ -1903,21 +1491,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // 挂载全局方法确保 inline onclick 100% 可调用
   window.editIcon = editIcon;
   window.deleteIcon = deleteIcon;
-  window.editWidget = editWidget;
-  window.deleteWidget = deleteWidget;
 
   // 初始化画布拖拽平移与滚轮缩放事件
   initCanvasEvents();
 
-  // 支持 URL 参数直达 Tab 或弹窗（便于联动与自动化测试）
+  // 支持 URL 参数直达弹窗（便于联动与自动化测试）
   const params = new URLSearchParams(window.location.search);
-  if (params.get("tab") === "widgets") {
-    const wBtn = document.querySelector('button[data-tab="widgets"]');
-    if (wBtn) wBtn.click();
-  }
   if (params.get("modal") === "edit") {
     openAddIconModal();
-  } else if (params.get("modal") === "widget") {
-    openAddWidgetModal();
   }
 });

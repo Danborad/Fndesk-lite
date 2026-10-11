@@ -569,74 +569,6 @@ body {
   flex-shrink: 0;
 }
 
-/* WeTab 卡片小组件管理专区 */
-.widgets-header-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.1rem 1.4rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-.widgets-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.widgets-subtitle {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.widget-admin-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.25rem;
-  margin-top: 1rem;
-}
-.widget-admin-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-.widget-admin-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.widget-type-badge {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  background: rgba(56, 189, 248, 0.15);
-  color: var(--accent);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-}
-.widget-size-tag {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-.widget-preview-wrapper {
-  display: flex;
-  justify-content: center;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: var(--radius-sm);
-  border: 1px dashed rgba(255, 255, 255, 0.08);
-}
-
 /* 模态框体系 */
 .modal-overlay {
   position: fixed;
@@ -802,8 +734,8 @@ select.form-control {
   margin-top: 1px;
 }
 
-/* WeTab 图标裁剪工坊 */
-.wetab-cropper-col {
+/* 图标裁剪工坊 */
+.studio-cropper-col {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -812,7 +744,7 @@ select.form-control {
   min-width: 0;
 }
 /* 关键：所有子块固定尺寸不参与 flex 压缩，避免调色盘被下方按钮压住或裁切 */
-.wetab-cropper-col > * {
+.studio-cropper-col > * {
   flex: 0 0 auto;
 }
 /* 图标工坊模式切换 Tab (图片/文字) - 整行铺满设计 */
@@ -970,7 +902,7 @@ select.form-control {
 }
 
 /* 正方形透明棋盘画布容器 (144px 精致紧凑，一页完美展示) */
-.wetab-canvas-wrapper {
+.studio-canvas-wrapper {
   position: relative;
   width: 144px;
   height: 144px;
@@ -990,10 +922,10 @@ select.form-control {
   cursor: grab;
   box-shadow: var(--canvas-shadow);
 }
-.wetab-canvas-wrapper:active {
+.studio-canvas-wrapper:active {
   cursor: grabbing;
 }
-.wetab-crop-canvas {
+.studio-crop-canvas {
   width: 114px;
   height: 114px;
   border-radius: 22%; /* 飞牛官方平滑圆角 */
@@ -1002,7 +934,7 @@ select.form-control {
 }
 
 /* 白色四角裁剪导向框 */
-.wetab-crop-frame {
+.studio-crop-frame {
   position: absolute;
   width: 114px;
   height: 114px;
@@ -1012,7 +944,7 @@ select.form-control {
 }
 
 /* 缩放倍率浮动徽章 */
-.wetab-zoom-badge {
+.studio-zoom-badge {
   position: absolute;
   top: 6px;
   right: 6px;
@@ -1033,7 +965,7 @@ select.form-control {
   letter-spacing: 0.5px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
-.wetab-zoom-badge.is-visible {
+.studio-zoom-badge.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
@@ -1069,8 +1001,8 @@ select.form-control {
   border-bottom-right-radius: 5px;
 }
 
-/* WeTab 工具栏按钮组 */
-.wetab-tool-row {
+/* 裁剪工具栏按钮组 */
+.studio-tool-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1078,7 +1010,7 @@ select.form-control {
   max-width: 210px;
   padding: 0;
 }
-.wetab-tool-btn {
+.studio-tool-btn {
   width: 26px;
   height: 26px;
   border-radius: 50%;
@@ -1092,23 +1024,23 @@ select.form-control {
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.wetab-tool-btn:hover {
+.studio-tool-btn:hover {
   background: var(--tool-btn-bg-hover);
   color: var(--tool-btn-color-hover);
   transform: scale(1.08);
 }
-.wetab-tool-btn:active {
+.studio-tool-btn:active {
   transform: scale(0.96);
 }
 
-/* WeTab 两排整齐圆点底色调色盘 */
-.wetab-palette-section {
+/* 两排整齐圆点底色调色盘 */
+.studio-palette-section {
   width: 100%;
   max-width: 260px;
   flex: 0 0 auto;
   padding: 2px 0;
 }
-.wetab-palette-dots {
+.studio-palette-dots {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 5px;
@@ -1136,8 +1068,8 @@ select.form-control {
   background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
 }
 
-/* WeTab 操作按钮组 (取消与完成保存并排) */
-.wetab-action-row {
+/* 操作按钮组 (取消与完成保存并排) */
+.studio-action-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1146,7 +1078,7 @@ select.form-control {
   padding-top: 6px;
   flex: 0 0 auto;
 }
-.btn-wetab-done {
+.btn-studio-done {
   flex: 1.8;
   padding: 0.38rem 0.75rem;
   font-size: 0.82rem;
@@ -1158,22 +1090,9 @@ select.form-control {
   box-shadow: 0 3px 12px rgba(79, 70, 229, 0.35);
   cursor: pointer;
 }
-.btn-wetab-done:hover {
+.btn-studio-done:hover {
   filter: brightness(1.12);
   transform: translateY(-1px);
-}
-
-/* WeTab 卡片小组件预览容器 */
-.widget-preview-box {
-  width: 100%;
-  min-height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--preview-box-bg);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  border: 1px dashed var(--preview-box-border);
 }
 
 /* Toast 提示容器 */
