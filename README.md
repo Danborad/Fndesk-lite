@@ -92,6 +92,17 @@ Fndesk Lite 与原项目的关系，是一次**聚焦式的重构**，而非替�
 
 ---
 
+## 📦 下载安装包
+
+不想自己打包？直接下载编译好的套件包（`fndesk.fpk`）手动安装即可：
+
+- **[⬇️ 下载最新版 fndesk.fpk](https://github.com/Danborad/Fndesk-lite/releases/latest)** —— 版本号见仓库 Releases 标签
+- 目录内也保留了 [`fndesk.fpk`](./fndesk.fpk)（对应最新一次提交）
+
+安装方式：飞牛应用中心 → 左下角 **手动安装** → 选择 `fndesk.fpk`。
+
+---
+
 ## 🛠️ 安装与使用
 
 ### 1. 打包安装包
